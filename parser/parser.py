@@ -1,5 +1,8 @@
 from HTMLParser import HTMLParser
 import re
+from stemming.porter2 import stem
+import os
+import glob
 
 # create a subclass and override the handler methods
 class MyHTMLParser(HTMLParser):
@@ -18,14 +21,24 @@ class MyHTMLParser(HTMLParser):
 	def handle_data(self, data):
 		if self.tag not in ("script"):
 			words = re.sub(r'[\W_]+'," ",data).lower().split()
-			print words
-			self.listWords.extend(words)
+			for word in words:
+				print stem(word)
+				self.listWords.append(stem(word))
 	def getWords(self):
 		return self.listWords
 		
 # instantiate the parser and fed it some HTML
-parser = MyHTMLParser()
-file1 = open("sample","r")
-text = file1.read()
-parser.feed(text)
-print parser.getWords()
+
+class AllFilesParser():
+	
+	def parse_files(self, filename):
+		parser = MyHTMLParser()
+		file1 = open(filename,"r")
+		text = file1.read()
+		parser.feed(text)
+		return parser.getWords()
+		
+
+
+
+AllFilesParser().parse_files();
