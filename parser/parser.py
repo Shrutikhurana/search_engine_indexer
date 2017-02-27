@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# encoding:utf-8
+
 from HTMLParser import HTMLParser
 import re
 from stemming.porter2 import stem
@@ -6,7 +9,13 @@ import glob
 from os import walk
 from nltk.corpus import stopwords 
 import collections
+import sys
+reload(sys)
+import site
 
+sys.setdefaultencoding("UTF-8")
+
+count_parser_words=0
 # create a subclass and override the handler methods
 class MyHTMLParser(HTMLParser):
     
@@ -15,6 +24,7 @@ class MyHTMLParser(HTMLParser):
 
 	def handle_starttag(self, tag, attrs):
 		# print "Encountered a start tag:", tag
+		
 		self.tag = tag;
 		
 	def handle_endtag(self, tag):pass
@@ -29,8 +39,11 @@ class MyHTMLParser(HTMLParser):
 	
 	def getWords(self):
 		# print self.list_of_words
+		global count_parser_words
 		mywords = self.list_of_words
 		self.list_of_words =[]
+		count_parser_words=count_parser_words+len(mywords)
+		print count_parser_words," ","\n";
 		return mywords
 		
 # instantiate the parser and fed it some HTML
@@ -48,8 +61,7 @@ class AllFilesParser():
 			word=list_of_words[i]
 			# word not in stopwords.words('english')
 			if (word) in self.term_dictionary: 
-				if i not in self.term_dictionary[(word)]:
-					self.term_dictionary[(word)].append(i)
+				self.term_dictionary[(word)].append(i)
 				# self.term_dictionary[stem(word)]=sorted(self.term_dictionary[stem(word)])
 			else:
 				self.term_dictionary[(word)] = list()
