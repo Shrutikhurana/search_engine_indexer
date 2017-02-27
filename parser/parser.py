@@ -22,17 +22,23 @@ class MyHTMLParser(HTMLParser):
 	tag =""
 	list_of_words=[]	
 
+	# list_of_words=[]	
+	script = False
 	def handle_starttag(self, tag, attrs):
 		# print "Encountered a start tag:", tag
 		
 		self.tag = tag;
+		if (tag == "script"):
+			self.script = True
 		
-	def handle_endtag(self, tag):pass
-		# print "Encountered an end tag :", tag		
+	def handle_endtag(self, tag):
+		# print "Encountered an end tag :", tag	
+			if self.script :
+				self.script = False
 
 	def handle_data(self, data):
-		if self.tag not in ("script"):
-			words = re.sub(r'[\W_]+'," ",data).lower().split()
+		if self.script == False:
+			words = re.sub(r'[^A-Za-z0-9]'," ",data).lower().split()
 			for i in range(0,len(words)):
 				word=words[i]
 				self.list_of_words.append(word)
@@ -43,7 +49,7 @@ class MyHTMLParser(HTMLParser):
 		mywords = self.list_of_words
 		self.list_of_words =[]
 		count_parser_words=count_parser_words+len(mywords)
-		print count_parser_words," ","\n";
+		# print count_parser_words," ","\n";
 		return mywords
 		
 # instantiate the parser and fed it some HTML
@@ -125,7 +131,7 @@ class parser_main:
 					document_freq_pos = {new_file_name:(len(list_of_words[word]),list_of_words[word])}
 					self.term_document[word].append(document_freq_pos)
 		# print self.term_document
-		print len(self.term_document)	
+			print len(self.term_document)	
 
 
 # path=r'E:\search_engine_indexer\parser\Test';	
@@ -141,11 +147,11 @@ for directory in dirnames:
 	directory_names.append(directory)
 	# print directory
 	directory_names.sort(key=int)
-print directory_names
+# print directory_names
 for directory in directory_names:
 	count_files=count_files+1
 	parser_ob.readfiles(path+"\\"+directory);
-	print "folder count", count_files
+	# print "folder count", count_files
 
 parser_ob.writefile();			
 print "The total number of document/files processed are",parser_ob.count_documents
