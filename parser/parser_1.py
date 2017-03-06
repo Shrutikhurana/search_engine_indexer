@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # encoding:utf-8
-
+import nltk
 from HTMLParser import HTMLParser
 import re
-from stemming.porter2 import stem
 import os
 import glob
 from os import walk
@@ -22,6 +21,7 @@ class MyHTMLParser(HTMLParser):
     
 	tag =""
 	list_of_words=[]	
+	tags =[]
 
 	# list_of_words=[]	
 	script = False
@@ -34,8 +34,9 @@ class MyHTMLParser(HTMLParser):
 		
 	def handle_endtag(self, tag):
 		# print "Encountered an end tag :", tag	
-			if self.script :
+			if self.script:
 				self.script = False
+				self.tag=""
 
 	def handle_data(self, data):
 		if self.script == False:
@@ -43,6 +44,7 @@ class MyHTMLParser(HTMLParser):
 			for i in range(0,len(words)):
 				word=words[i]
 				self.list_of_words.append(word)
+				self.tags.append(self.tag)
 	
 	def getWords(self):
 		# print self.list_of_words
@@ -51,7 +53,9 @@ class MyHTMLParser(HTMLParser):
 		self.list_of_words =[]
 		count_parser_words=count_parser_words+len(mywords)
 		# print count_parser_words," ","\n";
-		return mywords
+		print len(self.tags)
+		print len(mywords)
+		return mywords, self.tags
 		
 # instantiate the parser and fed it some HTML
 
@@ -61,18 +65,20 @@ class AllFilesParser():
 
 	def __init__(self): pass
 
-	def create_term_dictionary(self,list_of_words):
+	def create_term_dictionary(self,list_of_words, list_tags):
 		# print list_of_words
 		self.term_dictionary={}
 		for i in range(0,len(list_of_words)):
 			word=list_of_words[i]
 			# word not in stopwords.words('english')
-			if (word) in self.term_dictionary: 
-				self.term_dictionary[(word)].append(i)
+			if (word) in self.term_dictionary:
+				tup = (i, list_tags[i])
+				self.term_dictionary[(word)].append(tup)
 				# self.term_dictionary[stem(word)]=sorted(self.term_dictionary[stem(word)])
 			else:
 				self.term_dictionary[(word)] = list()
-				self.term_dictionary[(word)].append(i)
+				tup = (i, list_tags[i])
+				self.term_dictionary[(word)].append(tup)
 		# print self.term_dictionary
 		# f1=open("term_dict.txt",'a')
 		# for key,value in self.term_dictionary.iteritems():
@@ -84,12 +90,14 @@ class AllFilesParser():
 		try:
 			parser = MyHTMLParser()
 			parser.list_of_words=[]
+			parser.tags =[]
 			file1 = open(filename,"r")
 			text = file1.read()
 			parser.feed(text)
 		except Exception as e:
 			print e
-		return self.create_term_dictionary(parser.getWords())
+		list_words, list_tags = parser.getWords()
+		return self.create_term_dictionary(list_words, list_tags)
 		
 
 class parser_main:
@@ -137,36 +145,19 @@ class parser_main:
 		for word in self.term_document:
 			self.final_document_dic[word]=self.cnt[word]
 
-		# print self.final_document_dic
 
-		a={}
 		for word in self.term_document:
 			self.final_index_dic[word]={self.cnt[word]:self.term_document[word]}
 
 		parser_ob.compute_tf_idf()
 
-		# WITH TERM FREQUENCY AND POSITIONS
-		# f=open("dictionary_index.txt","w")
-		# for key in sorted(self.term_document.iterkeys()):
-  #  			# print "%s: %s" % (key, self.term_document[key])
-		# 	f.write(str(key)+": "+str(self.term_document[key])+'\n');
-		# f.close()	
+		# WITH TERM FREQUENCY,POSITIONS AND TAGS
+		f=open("dictionary_index.txt","w")
+		for key in sorted(self.term_document.iterkeys()):
+			f.write(str(key)+": "+str(self.term_document[key])+'\n');
+		f.close()	
 			
-		# # WITH DOCUMENT FREQUENCY,TERM FREQUECNY AND POSITIONS
-		# f=open("dictionary_index1.txt","w")
-		# for key in sorted(self.final_index_dic.iterkeys()):
-  #  			# print "%s: %s" % (key, self.term_document[key])
-		# 	f.write(str(key)+": "+str(self.final_index_dic[key])+'\n');
-		# f.close()	
-
-		# # WITH TERM, TERM FREQUENCY FOR EVERY DOCUMENT
-		# f=open("dictionary_index2.txt","w")
-		# for key in sorted(self.final_term_dic.iterkeys()):
-  #  			# print "%s: %s" % (key, self.term_document[key])
-		# 	f.write(str(key)+": "+str(self.final_term_dic[key])+'\n');
-		# f.close()	
-
-		print len(self.tf_idf)
+		# TF-IDF
 		f=open("tf-idf.txt","w")
 		for key in sorted(self.tf_idf.iterkeys()):
 			f.write(str(key)+"-"+str(self.tf_idf[key])+"\n")			
@@ -178,9 +169,8 @@ class parser_main:
 			filenames.sort(key=int)
 			for file in filenames:
 				list_file_names.append(path+"\\"+file)
-				# print file
+
 		for file_name in list_file_names:
-			# print self.count_documents
 			self.count_documents = self.count_documents + 1
 
 			first_index = file_name.rfind("\\", 0,len(file_name) )
@@ -191,8 +181,7 @@ class parser_main:
 			print new_file_name
 			list_of_words=dict()
 			list_of_words=AllFilesParser().parse_files(file_name);
-			# word_counter=collections.Counter(list_of_words)
-			# print type(list_of_words)
+		
 			for word in list_of_words:
 				x=0
 				if word in self.term_document:
@@ -221,18 +210,11 @@ class parser_main:
 					else:
 						x=x+len(list_of_words[word])
 						self.final_term_dic[word].append({new_file_name:x})
-				# print self.final_term_dic	
-
-			# for word in self.cnt:
-			# 	print word," ",self.cnt[word],"\n"		
-			
-		# print self.term_document
-			# print len(self.cnt)
 			print len(self.term_document)	
 
 
-# path=r'E:\search_engine_indexer\parser\Test';	
-path=r'E:\search_engine_indexer\parser\webpages_raw\WEBPAGES_RAW';	
+path=r'C:\Users\Reeta\Documents\IR\search_engine_indexer\parser\Test';	
+#path=r'E:\search_engine_indexer\parser\webpages_raw\WEBPAGES_RAW';	
 
 count_files=0
 
@@ -242,8 +224,8 @@ for (dirpath, dirnames, filenames) in walk(path):
 	break
 for directory in dirnames:
 	directory_names.append(directory)
-	# print directory
 	directory_names.sort(key=int)
+	
 # print directory_names
 for directory in directory_names:
 	count_files=count_files+1
