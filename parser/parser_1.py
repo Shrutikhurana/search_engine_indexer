@@ -12,7 +12,7 @@ import sys
 reload(sys)
 import site
 import math
-from Tkinter import *
+
 
 sys.setdefaultencoding("UTF-8")
 
@@ -146,12 +146,14 @@ class parser_main:
 		for word in self.term_document:
 			self.final_document_dic[word]=self.cnt[word]
 
-
 		for word in self.term_document:
 			self.final_index_dic[word]={self.cnt[word]:self.term_document[word]}
 
+		# compute tidf index
 		parser_ob.compute_tf_idf()
 
+		# WRITE INDEX
+		
 		# WITH TERM FREQUENCY,POSITIONS AND TAGS
 		f=open("dictionary_index.txt","w")
 		for key in sorted(self.term_document.iterkeys()):
@@ -231,44 +233,8 @@ for directory in dirnames:
 for directory in directory_names:
 	count_files=count_files+1
 	parser_ob.readfiles(path+"\\"+directory);
-	# print "folder count", count_files
+	#print "folder count", count_files
 
-parser_ob.writefile();			
+parser_ob.writefile()		
 print "The total number of document/files processed are",parser_ob.count_documents
 print "The number of unique words are",len(parser_ob.term_document)
-
-
-master = Tk()
-master.title("ICS Search")
-master.geometry("1500x900")
-frame = Frame(master)
-frame.pack(side = TOP)
-input_frame = Frame(frame)
-input_frame.pack(side = TOP)
-result_frame = Frame(frame)
-result_frame.pack(side = BOTTOM)
-
-def callback():
-	for widget in result_frame.winfo_children():
-		widget.destroy()
-	print text1.get()
-	print parser_ob.term_document[text1.get()]
-	data = parser_ob.term_document[text1.get()]
-	var = StringVar()
-
-	label = Label(result_frame, textvariable = var)
-	label.pack(side= TOP)
-	
-	var.set("Result count: " + str(len(data)))
-	for i in range(0,len(data)):
-		text2 = Text(result_frame,height = 1)
-		text2.insert(INSERT, data[i])
-		text2.pack()
-
-text1 = Entry(input_frame, width =100)
-text1.pack(side=LEFT)
-b = Button(input_frame, text="Search", command= callback)
-b.pack(side = RIGHT)
-
-mainloop()
-
