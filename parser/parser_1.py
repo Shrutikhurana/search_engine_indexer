@@ -12,6 +12,8 @@ import sys
 reload(sys)
 import site
 import math
+from stemming.porter2 import stem
+
 
 
 sys.setdefaultencoding("UTF-8")
@@ -44,7 +46,7 @@ class MyHTMLParser(HTMLParser):
 			words = re.sub(r'[^A-Za-z0-9]'," ",data).lower().split()
 			for i in range(0,len(words)):
 				word=words[i]
-				self.list_of_words.append(word)
+				self.list_of_words.append(stem(word))
 				self.tags.append(self.tag)
 	
 	def getWords(self):
@@ -109,6 +111,30 @@ class parser_main:
 	final_term_dic={} #word:term_frequency mapping
 	final_document_dic={} #word:term_document frequency mapping
 	tf_idf={} #tf-idf for term document pair
+	bookkeeping = {}
+
+
+	def readbookkeeping(self):
+		file = open("bookkeeping1.json", "r")
+		bookkeeping = {}
+		lines  = file.read().split(",")
+		for line in lines:
+			if line == "{" or line == "}":
+				continue
+			else:
+				line = line.strip()
+				data = line.split(":")
+				data[0] = data[0][1:-1]
+				data[0] = data[0].replace("/","-")
+				data[0] = data[0].replace("\"","")
+				if len (data) > 1:
+					data[1] = data[1][2:-1]
+					data[0]=data[0].strip()
+					# print data[0],"***"
+					bookkeeping[data[0]] = data[1]
+		self.bookkeeping = bookkeeping
+
+
 
 	def compute_tf_idf(self):
 		# print self.final_term_dic;
@@ -127,7 +153,7 @@ class parser_main:
 					if word not in self.tf_idf:
 						self.tf_idf[word]=[]
 						f=(float( math.log10(1+value)) * float(math.log10(float(self.count_documents)/ float(self.final_document_dic[word])) ) )
-						print word,key,value,self.count_documents,f 
+						# print word,key,value,self.count_documents,f 
 						# print f
 						self.tf_idf[word].append({key:f})	
 						# self.tf_idf[word].append({key: ( math.log10(1+value)* math.log10(self.count_documents/ self.final_document_dic[word] )) })
@@ -181,7 +207,15 @@ class parser_main:
 			second_index = file_name.rfind("\\", 0,first_index  )
 			name2 = file_name[second_index +1:]	
 			new_file_name = name2	
-			print new_file_name
+			# print new_file_name
+			new_file_name2 = new_file_name.replace("\\", "-")
+			print new_file_name2
+			print (self.bookkeeping)
+			if new_file_name2 in self.bookkeeping:
+				# print new_file_name2
+				if self.bookkeeping[new_file_name2].endswith(".txt") or self.bookkeeping[new_file_name2].endswith(".r") or self.bookkeeping[new_file_name2].endswith(".m") or self.bookkeeping[new_file_name2].endswith(".java") or self.bookkeeping[new_file_name2].endswith(".jpg") or self.bookkeeping[new_file_name2].endswith(".py") or self.bookkeeping[new_file_name2].endswith(".cc") or self.bookkeeping[new_file_name2].endswith(".h") or self.bookkeeping[new_file_name2].endswith(".cpp") or self.bookkeeping[new_file_name2].endswith(".r") or self.bookkeeping[new_file_name2].endswith(".m"):
+					continue			
+						
 			list_of_words=dict()
 			list_of_words=AllFilesParser().parse_files(file_name);
 		
@@ -216,12 +250,13 @@ class parser_main:
 			print len(self.term_document)	
 
 
-path=r'C:\Users\Reeta\Documents\IR\search_engine_indexer\parser\Test';	
-#path=r'E:\search_engine_indexer\parser\webpages_raw\WEBPAGES_RAW';	
+path=r'E:\search_engine_indexer\parser\Test';	
+# path=r'E:\search_engine_indexer\parser\webpages_raw\WEBPAGES_RAW';	
 
 count_files=0
 
 parser_ob=parser_main()
+parser_ob.readbookkeeping()
 directory_names=[]
 for (dirpath, dirnames, filenames) in walk(path):
 	break
