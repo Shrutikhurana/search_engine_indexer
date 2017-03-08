@@ -1,5 +1,6 @@
 from Tkinter import *
 from operator import itemgetter
+import webbrowser
 
 def readbookkeeping():
 	file = open("bookkeeping.json", "r")
@@ -73,13 +74,30 @@ def callback():
 	label = Label(result_frame, textvariable = var)
 	label.pack(side= TOP)
 	
+	scrollbar = Scrollbar(result_frame)
+	scrollbar.pack( side = RIGHT, fill=Y )
+
+	mylist = Listbox(result_frame, yscrollcommand = scrollbar.set,height =10, width = 800 )
+
+	
 	result = getSearchResultsByTFIDF(query_list)
 	print result
+	
 	var.set("Result count: " + str(len(result)))
+	
 	for i in range(0,len(result)):
-		text2 = Text(result_frame,height = 4)
-		text2.insert(INSERT, result[i][0] + bookkeeping[result[i][0]])
-		text2.pack()
+		mylist.insert(END, bookkeeping[result[i][0]])
+	mylist.pack( side = LEFT, fill = BOTH )
+	scrollbar.config( command = mylist.yview )
+	mylist.bind( "<Double-Button-1>" , internet)
+
+def internet(event):
+	print "here"
+	widget = event.widget
+	selection=widget.curselection()
+	value = widget.get(selection[0])
+	print "selection:", selection, ": '%s'" % value
+	webbrowser.open_new(value)
 
 bookkeeping = readbookkeeping()	
 print len(bookkeeping)	
